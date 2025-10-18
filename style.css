@@ -1,25 +1,54 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+/* ==================== RESET ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
 
+/* ==================== BODY ==================== */
 body {
-  background: linear-gradient(145deg, #fff0f6, #ffe6f1);
   min-height: 100vh;
+  background: radial-gradient(circle at top right, #1a0d00, #2c0a00, #000);
+  color: #fbe9c6;
   overflow-x: hidden;
-  color: #333;
+  transition: background 0.5s ease, color 0.5s ease;
 }
 
-/* Banner */
+/* ==================== MAINTENANCE BANNER ==================== */
+.glass-maintenance {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  background: rgba(30, 15, 5, 0.65);
+  color: #ffd9a8;
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  font-size: 14px;
+  z-index: 3000;
+  box-shadow: 0 2px 10px rgba(255, 120, 40, 0.3);
+}
+.alert-icon { width: 18px; height: 18px; color: #ffa94d; }
+
+/* ==================== BETA BANNER ==================== */
 #beta-banner {
+  margin-top: 50px;
   text-align: center;
-  background: rgba(255, 153, 190, 0.6);
-  color: white;
-  padding: 6px;
+  background: rgba(255, 120, 40, 0.25);
+  color: #ffd9a8;
   font-weight: 600;
+  padding: 6px;
   backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-/* Floating Hearts */
+/* ==================== FLOATING HEARTS ==================== */
 .hearts {
   position: fixed;
   top: 0; left: 0;
@@ -30,71 +59,131 @@ body {
 .heart {
   position: absolute;
   bottom: -10px;
-  opacity: 0.5;
-  animation: floatUp 7s linear infinite;
+  opacity: 0.8;
+  animation: floatUp 8s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(255, 120, 0, 0.6));
 }
 @keyframes floatUp {
   0% { transform: translateY(0) scale(1); opacity: 1; }
   100% { transform: translateY(-110vh) scale(0.8); opacity: 0; }
 }
 
-/* Glass UI */
+/* ==================== HEADER ==================== */
 .glass-header {
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.45);
-  padding: 15px 25px;
-  box-shadow: 0 4px 10px rgba(255, 105, 135, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: rgba(30, 15, 5, 0.7);
+  backdrop-filter: blur(15px);
+  padding: 15px 25px;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 10px rgba(255, 120, 40, 0.3);
 }
-.glass-card {
-  backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.55);
-  border-radius: 18px;
-  box-shadow: 0 6px 20px rgba(255, 105, 135, 0.15);
-  padding: 22px;
-}
+.glass-header h1 i { color: #ff9933; }
 
-/* Navigation */
-nav { display: flex; gap: 10px; }
+/* ==================== NAVIGATION ==================== */
+nav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
 .nav-btn {
+  background: rgba(40, 20, 5, 0.6);
+  border: 1px solid rgba(255, 150, 60, 0.25);
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(255, 140, 0, 0.2);
+}
+.nav-btn:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 100, 20, 0.25);
+  box-shadow: 0 4px 10px rgba(255, 120, 0, 0.3);
+}
+.nav-btn.active {
+  background: linear-gradient(135deg, #ff8a00, #ff4800);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 120, 0, 0.4);
+}
+.nav-btn i {
+  width: 26px;
+  height: 26px;
+  color: #ff9933;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+.nav-btn:hover i { transform: scale(1.2); color: #ffb347; }
+.nav-btn.active i { color: #fff; }
+
+/* ==================== DARK MODE TOGGLE ==================== */
+#dark-toggle {
   background: transparent;
   border: none;
-  padding: 8px;
-  border-radius: 12px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: transform 0.3s;
 }
-.nav-btn:hover, .nav-btn.active {
-  background: rgba(255, 120, 155, 0.15);
-}
-.nav-btn i { color: #ff4f91; width: 24px; height: 24px; }
+#dark-toggle:hover { transform: scale(1.15); }
+#dark-toggle i { color: #ff9933; width: 22px; height: 22px; }
 
-/* Pages */
+/* ==================== CARDS ==================== */
+.glass-card {
+  background: rgba(30, 15, 5, 0.65);
+  backdrop-filter: blur(16px);
+  border-radius: 22px;
+  padding: 25px;
+  margin: 25px;
+  box-shadow: 0 6px 20px rgba(255, 120, 40, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 120, 40, 0.35);
+}
+
+/* ==================== PAGES ==================== */
 .page { display: none; animation: fade 0.4s ease; }
 .page.active { display: block; padding: 25px; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
-/* Reflection Section */
+/* ==================== REFLECTION ==================== */
 #category {
   width: 100%;
   border-radius: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid #ffa94d;
   padding: 8px;
   margin: 10px 0;
+  background: rgba(0,0,0,0.2);
+  color: #ffd9a8;
 }
-.prompt-text { font-style: italic; margin: 10px 0; color: #555; }
+.prompt-text { font-style: italic; margin: 10px 0; color: #ffbf80; }
 textarea {
   width: 100%;
   height: 120px;
   border-radius: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #ff9933;
   padding: 10px;
+  background: rgba(0,0,0,0.3);
+  color: #fbe9c6;
   resize: none;
 }
+#next-question {
+  background: rgba(255, 150, 40, 0.2);
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  color: #ffa94d;
+}
 #submit-reflection {
-  background: #ff6f9e;
+  background: linear-gradient(135deg, #ff8a00, #cc3300);
   color: white;
   border: none;
   border-radius: 10px;
@@ -102,80 +191,131 @@ textarea {
   margin-top: 10px;
   cursor: pointer;
   font-weight: 600;
+  transition: opacity 0.3s;
 }
+#submit-reflection:hover { opacity: 0.9; }
 .progress-container {
   margin-top: 15px;
   height: 10px;
-  background: #ffe6ef;
+  background: #332012;
   border-radius: 10px;
   overflow: hidden;
 }
 #progress-bar {
   height: 100%;
-  background: #ff4f91;
+  background: linear-gradient(90deg, #ff8c00, #ff4800);
   width: 0%;
   transition: width 0.4s;
 }
-.level-text { margin-top: 8px; color: #ff4f91; font-weight: 600; }
+.level-text { margin-top: 8px; color: #ff9933; font-weight: 600; }
 
-/* Gifts */
-.gift-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+/* ==================== GIFTS ==================== */
+.gift-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
 .gift {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
   padding: 18px;
   transition: 0.3s;
-  box-shadow: 0 4px 12px rgba(255, 105, 135, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 120, 40, 0.15);
   cursor: pointer;
 }
-.gift:hover { transform: scale(1.05); background: rgba(255, 255, 255, 0.8); }
-.gift i { color: #ff4f91; width: 28px; height: 28px; }
-.gift-message { margin-top: 12px; text-align: center; font-style: italic; }
+.gift:hover {
+  transform: scale(1.1);
+  background: rgba(255, 120, 0, 0.2);
+}
+.gift i {
+  color: #ffb347;
+  width: 28px;
+  height: 28px;
+}
+.gift-message {
+  margin-top: 12px;
+  text-align: center;
+  font-style: italic;
+  color: #ffcc80;
+}
 
-/* Profile */
-.profile-card { text-align: center; }
+/* ==================== PROFILE ==================== */
+.profile-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .avatar-default {
-  width: 110px; height: 110px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 10px auto;
-  box-shadow: 0 0 12px rgba(255, 128, 171, 0.4);
+  background: linear-gradient(135deg, #2a1405, #1a0900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  box-shadow: 0 0 25px rgba(255, 100, 0, 0.3);
 }
 .avatar-default i {
-  color: #ff5b8a;
-  width: 60px; height: 60px;
+  color: #ff9933;
+  width: 90px;
+  height: 90px;
 }
-.verified { color: #4CAF50; }
-.profile-card button {
-  background: #ff5b8a;
-  border: none;
-  color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-top: 12px;
-  cursor: pointer;
+.verified {
+  color: #ffb347;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: pumpkinPulse 2s infinite;
 }
-.profile-card button:hover { background: #ff3b77; }
+@keyframes pumpkinPulse {
+  0%,100% { filter: drop-shadow(0 0 3px rgba(255,150,40,0.4)); }
+  50% { filter: drop-shadow(0 0 8px rgba(255,180,60,0.9)); }
+}
 
-/* Modal */
+/* ==================== MODAL ==================== */
 .modal {
   display: none;
-  position: fixed; top: 0; left: 0;
+  position: fixed;
+  top: 0; left: 0;
   width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  justify-content: center; align-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  justify-content: center;
+  align-items: center;
+  z-index: 1500;
 }
 .modal-content {
-  width: 300px; text-align: center; position: relative;
+  width: 320px;
+  text-align: center;
+  position: relative;
 }
 .close {
-  position: absolute; top: 8px; right: 12px;
-  cursor: pointer; font-size: 22px; color: #ff5b8a;
+  position: absolute;
+  top: 8px; right: 12px;
+  cursor: pointer;
+  font-size: 22px;
+  color: #ff9933;
 }
 .hidden { display: none; }
 .danger {
-  background: #e83f5b; color: white; border: none;
-  padding: 8px 14px; border-radius: 10px;
-  cursor: pointer; margin-top: 10px;
+  background: #cc3300;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 650px) {
+  .glass-header {
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 0 0 14px 14px;
+  }
+  .glass-card { padding: 18px; }
+  textarea { height: 100px; }
+  .modal-content { width: 90%; }
 }
