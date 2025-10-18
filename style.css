@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+body {
+  background: linear-gradient(145deg, #fff0f6, #ffe6f1);
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: #333;
+}
+
+/* Banner */
+#beta-banner {
+  text-align: center;
+  background: rgba(255, 153, 190, 0.6);
+  color: white;
+  padding: 6px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+}
+
+/* Floating Hearts */
+.hearts {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+.heart {
+  position: absolute;
+  bottom: -10px;
+  opacity: 0.5;
+  animation: floatUp 7s linear infinite;
+}
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-110vh) scale(0.8); opacity: 0; }
+}
+
+/* Glass UI */
+.glass-header {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.45);
+  padding: 15px 25px;
+  box-shadow: 0 4px 10px rgba(255, 105, 135, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.glass-card {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(255, 105, 135, 0.15);
+  padding: 22px;
+}
+
+/* Navigation */
+nav { display: flex; gap: 10px; }
+.nav-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.nav-btn:hover, .nav-btn.active {
+  background: rgba(255, 120, 155, 0.15);
+}
+.nav-btn i { color: #ff4f91; width: 24px; height: 24px; }
+
+/* Pages */
+.page { display: none; animation: fade 0.4s ease; }
+.page.active { display: block; padding: 25px; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Reflection Section */
+#category {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin: 10px 0;
+}
+.prompt-text { font-style: italic; margin: 10px 0; color: #555; }
+textarea {
+  width: 100%;
+  height: 120px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  resize: none;
+}
+#submit-reflection {
+  background: #ff6f9e;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-top: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.progress-container {
+  margin-top: 15px;
+  height: 10px;
+  background: #ffe6ef;
+  border-radius: 10px;
+  overflow: hidden;
+}
+#progress-bar {
+  height: 100%;
+  background: #ff4f91;
+  width: 0%;
+  transition: width 0.4s;
+}
+.level-text { margin-top: 8px; color: #ff4f91; font-weight: 600; }
+
+/* Gifts */
+.gift-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.gift {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  padding: 18px;
+  transition: 0.3s;
+  box-shadow: 0 4px 12px rgba(255, 105, 135, 0.1);
+  cursor: pointer;
+}
+.gift:hover { transform: scale(1.05); background: rgba(255, 255, 255, 0.8); }
+.gift i { color: #ff4f91; width: 28px; height: 28px; }
+.gift-message { margin-top: 12px; text-align: center; font-style: italic; }
+
+/* Profile */
+.profile-card { text-align: center; }
+.avatar-default {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px auto;
+  box-shadow: 0 0 12px rgba(255, 128, 171, 0.4);
+}
+.avatar-default i {
+  color: #ff5b8a;
+  width: 60px; height: 60px;
+}
+.verified { color: #4CAF50; }
+.profile-card button {
+  background: #ff5b8a;
+  border: none;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+.profile-card button:hover { background: #ff3b77; }
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  justify-content: center; align-items: center;
+}
+.modal-content {
+  width: 300px; text-align: center; position: relative;
+}
+.close {
+  position: absolute; top: 8px; right: 12px;
+  cursor: pointer; font-size: 22px; color: #ff5b8a;
+}
+.hidden { display: none; }
+.danger {
+  background: #e83f5b; color: white; border: none;
+  padding: 8px 14px; border-radius: 10px;
+  cursor: pointer; margin-top: 10px;
+}

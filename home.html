@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HubbyHW 💕 | For Brooke</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div id="beta-banner">💞 HubbyHW Beta v3.6 — A Space for Love and Reflection</div>
+
+  <!-- Animated Hearts -->
+  <div class="hearts"></div>
+
+  <!-- Header -->
+  <header class="glass-header">
+    <h1><i data-lucide="heart"></i> HubbyHW</h1>
+    <nav>
+      <button class="nav-btn active" data-page="home"><i data-lucide="home"></i></button>
+      <button class="nav-btn" data-page="reflection"><i data-lucide="book"></i></button>
+      <button class="nav-btn" data-page="gifts"><i data-lucide="gift"></i></button>
+      <button class="nav-btn" data-page="profile"><i data-lucide="user"></i></button>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main id="page-container">
+    <!-- Home -->
+    <section id="home" class="page active">
+      <div class="welcome glass-card">
+        <h2>Welcome Back, Brooke 💗</h2>
+        <p>Your heart journey continues with every reflection you write.</p>
+        <div class="level-display">
+          <i data-lucide="shield-check"></i>
+          <span id="profile-level">Lv 1 – Warm Heart 💗</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reflection Page -->
+    <section id="reflection" class="page">
+      <div class="glass-card">
+        <h2>Reflection Time ✨</h2>
+        <select id="category">
+          <option value="love">Love & Appreciation</option>
+          <option value="communication">Communication</option>
+          <option value="growth">Growth & Trust</option>
+        </select>
+        <p id="prompt-text" class="prompt-text"></p>
+        <textarea id="reflection-input" placeholder="Write your heart here..."></textarea>
+        <button id="submit-reflection"><i data-lucide="check-circle"></i> Save Reflection</button>
+
+        <div class="progress-container">
+          <div id="progress-bar"></div>
+        </div>
+        <p id="level-text" class="level-text"></p>
+      </div>
+    </section>
+
+    <!-- Gifts Page -->
+    <section id="gifts" class="page">
+      <div class="glass-card">
+        <h2>Your Love Gifts 🎁</h2>
+        <div class="gift-grid">
+          <div class="gift" data-id="1"><i data-lucide="sparkles"></i></div>
+          <div class="gift" data-id="2"><i data-lucide="moon"></i></div>
+          <div class="gift" data-id="3"><i data-lucide="key"></i></div>
+          <div class="gift" data-id="4"><i data-lucide="crown"></i></div>
+          <div class="gift" data-id="5"><i data-lucide="heart-handshake"></i></div>
+        </div>
+        <p id="gift-message" class="gift-message"></p>
+      </div>
+    </section>
+
+    <!-- Profile Page -->
+    <section id="profile" class="page">
+      <div class="profile-card glass-card">
+        <div class="avatar-default">
+          <i data-lucide="user-circle"></i>
+        </div>
+        <h3>Brooke Pearson <i data-lucide="badge-check" class="verified"></i></h3>
+        <p><strong>Level:</strong> <span id="profile-rank">Loving Partner 💕</span></p>
+        <p><strong>Reflections:</strong> <span id="reflection-count">0</span></p>
+        <button id="hubby-panel-btn"><i data-lucide="lock"></i> Hubby Panel</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Hubby Panel Modal -->
+  <div id="hubby-panel" class="modal">
+    <div class="modal-content glass-card">
+      <span class="close" id="close-hubby">&times;</span>
+      <h3>Hubby Panel 💼</h3>
+      <p>Enter your secret PIN:</p>
+      <input type="password" id="hubby-pin" maxlength="4" placeholder="****" />
+      <button id="submit-pin"><i data-lucide="unlock"></i> Unlock</button>
+
+      <div id="hubby-data" class="hidden">
+        <h4>Saved Reflections 🗒️</h4>
+        <ul id="reflection-list"></ul>
+        <button id="reset-progress" class="danger"><i data-lucide="trash"></i> Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
