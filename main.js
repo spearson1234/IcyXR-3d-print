@@ -163,6 +163,7 @@ const App = {
     state: {
         isDiscountActive: false,
         modelIndex: 0,
+        selectedPriceItem: null,
         userId: null,
     },
     config: {
@@ -204,6 +205,7 @@ const App = {
             pricingCardsContainer: document.querySelector('.pricing-cards'),
             qualitySelector: document.getElementById('quality-selector'),
             discountInput: document.getElementById('discount-input'),
+            purchaseBtn: document.getElementById('purchase-btn'),
             redeemBtn: document.getElementById('redeem-btn'),
             closeSidebarBtn: document.getElementById('close-sidebar-btn'),
             navDots: document.querySelectorAll('.nav-dot'),
@@ -246,6 +248,7 @@ const App = {
         this.elements.navDots.forEach((dot, idx) => dot.onclick = () => this.threeDViewer.setModel(idx));
         this.elements.redeemBtn.onclick = () => this.handleDiscountRedeem();
         this.elements.qualitySelector.onchange = () => this.renderModelDetails();
+        this.elements.purchaseBtn.onclick = () => this.handlePurchase();
     },
 
     // --- Utility Methods ---
@@ -279,7 +282,7 @@ const App = {
     // --- Rendering Methods ---
     renderPricingCards() {
         this.elements.pricingCardsContainer.innerHTML = '';
-        this.config.originalPrices.forEach(item => {
+        this.config.originalPrices.forEach((item, index) => {
             let priceHtml;
             if (item.price === null) {
                 priceHtml = `<p class="text-sm text-gray-300 mt-2">Contact us for a price range</p>`;
@@ -292,10 +295,17 @@ const App = {
                 }
             }
             const card = document.createElement('div');
-            card.className = 'pricing-card';
-            card.innerHTML = `<h3 class="text-xl font-bold">${item.name}</h3><p class="text-sm text-gray-300">Print Time: ${item.printTime}</p>${priceHtml}`;
+            card.className = `pricing-card relative ${this.state.selectedPriceItem === index ? 'selected' : ''}`;
+            card.dataset.index = index;
+            card.innerHTML = `
+                <div class="tick-icon" style="transform: ${this.state.selectedPriceItem === index ? 'scale(1)' : 'scale(0)'}; background-color: ${this.state.selectedPriceItem === index ? '#4ade80' : 'rgba(255,255,255,0.2)'};"></div>
+                <h3 class="text-xl font-bold">${item.name}</h3>
+                <p class="text-sm text-gray-300">Print Time: ${item.printTime}</p>
+                ${priceHtml}`;
             this.elements.pricingCardsContainer.appendChild(card);
+            card.onclick = () => this.selectPriceItem(index, item.price !== null);
         });
+        this.elements.purchaseBtn.classList.toggle('hidden', this.state.selectedPriceItem === null);
     },
 
     renderModelDetails() {
@@ -365,12 +375,44 @@ const App = {
         }
     },
 
+    selectPriceItem(index, isSelectable) {
+        if (!isSelectable) {
+            this.showMessage("This item requires contacting us for a price.");
+            return;
+        }
+        if (this.state.selectedPriceItem === index) {
+            this.state.selectedPriceItem = null; // Deselect
+        } else {
+            this.state.selectedPriceItem = index; // Select
+        }
+        this.renderPricingCards(); // Re-render to show selection
+    },
+
+    handlePurchase() {
+        if (this.state.selectedPriceItem === null) {
+            this.showMessage("Please select an item to purchase.");
+            return;
+        }
+
+        const item = this.config.originalPrices[this.state.selectedPriceItem];
+        let finalPrice = item.price;
+        if (this.state.isDiscountActive) {
+            finalPrice *= (1 - this.config.DISCOUNT_RATE);
+        }
+
+        const subject = `New 3D Print Order: ${item.name}`;
+        const body = `Hello, I would like to order the following item:\n\n- Item: ${item.name}\n- Price: £${finalPrice.toFixed(2)}${this.state.isDiscountActive ? ' (Discounted)' : ''}\n- Print Time: ${item.printTime}\n\nMy User ID is: ${this.state.userId || 'Not available'}\n\nPlease let me know the next steps.\n\nThank you!`;
+
+        window.location.href = `mailto:icyxrr@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        this.showMessage("Please complete the purchase in your email client.");
+    },
+
     // --- View Management ---
     viewManager: {
         init(app) {
             this.app = app;
             this.views = {
-                pricing: { element: app.elements.pricingWave, onShow: () => { app.renderPricingCards(); this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.pricingWave.classList.add('active'); } },
+                pricing: { element: app.elements.pricingWave, onShow: () => { this.app.state.selectedPriceItem = null; app.renderPricingCards(); this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.pricingWave.classList.add('active'); } },
                 contact: { element: app.elements.contactForm, onShow: () => { this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.contactForm.classList.add('active'); } },
                 userProfile: { element: app.elements.userProfileCard, onShow: () => { 
                     this.app.elements.employeeCardsContainer.classList.add('hidden'); 
