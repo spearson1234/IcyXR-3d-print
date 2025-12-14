@@ -276,6 +276,11 @@ const App = {
             searchInput: document.getElementById('search-input'),
             searchResults: document.getElementById('search-results'),
             searchedUserProfileModal: document.getElementById('searched-user-profile-modal'),
+            countdownTimer: document.getElementById('countdown-timer'),
+            countdownDays: document.getElementById('countdown-days'),
+            countdownHours: document.getElementById('countdown-hours'),
+            countdownMinutes: document.getElementById('countdown-minutes'),
+            countdownSeconds: document.getElementById('countdown-seconds'),
         };
         this.elements.viewMyTasksBtn = document.getElementById('view-my-tasks-btn');
         this.elements.setTaskBtn = document.getElementById('set-task-btn');
@@ -289,6 +294,7 @@ const App = {
         this.initFirebase();
         this.bindEvents();
         this.initAnnouncementListener();
+        this.initCountdown();
         this.initSiteStatusListener();
         this.updateViewCount();
         this.renderEmployeeCards();
@@ -629,6 +635,38 @@ const App = {
     toggleSiteStatus() {
         const newStatus = !this.state.isSiteActive;
         this.db.ref('siteStatus').set({ isActive: newStatus });
+    },
+
+    initCountdown() {
+        const countdownDate = new Date('2026-01-01T13:00:00').getTime();
+        if (!this.elements.countdownTimer) return;
+
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = countdownDate - now;
+
+            if (distance < 0) {
+                clearInterval(interval);
+                this.elements.countdownTimer.innerHTML = '<p class="text-2xl font-bold text-green-400">The store is now open!</p>';
+                // Automatically set the site to active when the countdown finishes
+                this.db.ref('siteStatus').set({ isActive: true });
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Helper to add leading zero
+            const pad = (num) => num.toString().padStart(2, '0');
+
+            this.elements.countdownDays.textContent = pad(days);
+            this.elements.countdownHours.textContent = pad(hours);
+            this.elements.countdownMinutes.textContent = pad(minutes);
+            this.elements.countdownSeconds.textContent = pad(seconds);
+
+        }, 1000);
     },
 
     updateViewCount() {
