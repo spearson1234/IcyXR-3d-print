@@ -194,6 +194,7 @@ const App = {
     init() {
         this.auth = window.auth;
         this.db = window.db;
+        this.notificationListener = null;
 
         // Cache DOM elements
         this.elements = {
@@ -237,6 +238,15 @@ const App = {
             ordersPanel: document.getElementById('orders-panel'),
             ordersList: document.getElementById('orders-list'),
             closeOrdersBtn: document.getElementById('close-orders-btn'),
+            adminBanBtn: document.getElementById('admin-ban-btn'),
+            adminBanPanel: document.getElementById('admin-ban-panel'),
+            closeAdminBanBtn: document.getElementById('close-admin-ban-btn'),
+            banUserSelect: document.getElementById('ban-user-select'),
+            banReasonInput: document.getElementById('ban-reason-input'),
+            executeBanBtn: document.getElementById('execute-ban-btn'),
+            userNotificationBox: document.getElementById('user-notification-box'),
+            banReasonDisplay: document.getElementById('ban-reason-display'),
+            bannedUserPanel: document.getElementById('banned-user-panel'),
             userVerifiedBadge: document.getElementById('user-verified-badge'),
         };
 
@@ -262,6 +272,9 @@ const App = {
         document.getElementById("search").onclick = () => this.showMessage("Search coming soon!"); 
         if (this.elements.ordersBtn) {
             this.elements.ordersBtn.onclick = () => this.viewManager.show('orders');
+        }
+        if (this.elements.adminBanBtn) {
+            this.elements.adminBanBtn.onclick = () => this.openBanPanel();
         }
         document.getElementById("profile-btn").onclick = () => {
             if (this.state.userId) {
@@ -314,6 +327,24 @@ const App = {
         if (this.elements.closeOrdersBtn) {
             this.elements.closeOrdersBtn.onclick = () => this.viewManager.show('viewer');
         }
+        if (this.elements.closeAdminBanBtn) {
+            this.elements.closeAdminBanBtn.onclick = () => this.elements.adminBanPanel.classList.add('hidden');
+        }
+        if (this.elements.executeBanBtn) {
+            this.elements.executeBanBtn.onclick = () => this.executeBan();
+        }
+
+        // Use event delegation for dynamically created order buttons
+        this.elements.ordersList.addEventListener('click', (e) => {
+            const orderId = e.target.dataset.orderId;
+            const userId = e.target.dataset.userId;
+            if (e.target.classList.contains('approve-order-btn')) {
+                this.approveOrder(orderId, userId);
+            }
+            if (e.target.classList.contains('deny-order-btn')) {
+                this.denyOrder(orderId, userId);
+            }
+        });
     },
 
     // --- Utility Methods ---
@@ -339,18 +370,36 @@ const App = {
                 this.elements.logoutBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4m-5-14l5 5-5 5m5-5H3"></path></svg>';
 
                 // Show verified badge for specific user
+                this.elements.adminBanBtn.classList.add('hidden');
                 this.elements.ordersBtn.classList.add('hidden'); // Hide by default
                 if (user.email === 'icyxrr@gmail.com') {
+                    this.elements.adminBanBtn.classList.remove('hidden');
                     this.elements.ordersBtn.classList.remove('hidden');
                     this.elements.userVerifiedBadge.classList.remove('hidden');
                 } else {
                     this.elements.userVerifiedBadge.classList.add('hidden');
                 }
 
+                // Start listening for notifications for this user
+                if (this.notificationListener) this.notificationListener.off();
+                this.notificationListener = this.db.ref('notifications/' + user.uid);
+                this.notificationListener.on('child_added', (snapshot) => this.showUserNotification(snapshot));
+
+
                 // Listen for profile changes
                 this.profileRef = this.db.ref('users/' + user.uid);
                 this.profileRef.on('value', (snapshot) => {
                     const profile = snapshot.val();
+                    if (profile?.banned?.status === true) {
+                        // If user is banned, show the panel and sign them out.
+                        this.elements.banReasonDisplay.textContent = `Reason: ${profile.banned.reason || 'No reason provided.'}`;
+                        this.viewManager.hideAll(); // Hide all other UI
+                        this.elements.bannedUserPanel.classList.remove('hidden');
+                        return;
+                    } else {
+                        // Explicitly hide the panel if the user is not banned.
+                        this.elements.bannedUserPanel.classList.add('hidden');
+                    }
                     if (profile) {
                         // Only update the UI if the profile exists.
                         // This prevents resetting the name on subsequent loads.
@@ -367,10 +416,13 @@ const App = {
                 this.state.userId = null;
                 this.state.userEmail = null;
                 this.elements.authorNameDisplay.textContent = "Guest";
+                this.elements.bannedUserPanel.classList.add('hidden'); // Ensure panel is hidden for guests
                 this.elements.logoutBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>';
+                this.elements.adminBanBtn.classList.add('hidden');
                 this.elements.ordersBtn.classList.add('hidden');
                 this.elements.userVerifiedBadge.classList.add('hidden'); // Hide on logout
                 if (this.profileRef) this.profileRef.off(); // Stop listening
+                if (this.notificationListener) this.notificationListener.off(); // Stop listening for notifications
             }
         });
     },
@@ -488,6 +540,69 @@ const App = {
             .catch(error => this.showMessage(`Error sending message: ${error.message}`));
     },
 
+    showUserNotification(snapshot) {
+        const notification = snapshot.val();
+        const box = this.elements.userNotificationBox;
+        box.textContent = notification.message;
+        box.style.opacity = 1;
+        box.style.transform = 'translateX(-50%) translateY(0)';
+
+        // Remove the notification from DB after showing it
+        snapshot.ref.remove();
+
+        setTimeout(() => { box.style.opacity = 0; box.style.transform = 'translateX(-50%) translateY(20px)'; }, 5000);
+    },
+
+    openBanPanel() {
+        this.elements.adminBanPanel.classList.remove('hidden');
+        const userSelect = this.elements.banUserSelect;
+        userSelect.innerHTML = '<option>Loading users...</option>';
+
+        this.db.ref('users').once('value', (snapshot) => {
+            userSelect.innerHTML = '';
+            const users = snapshot.val();
+            if (users) {
+                Object.keys(users).forEach(userId => {
+                    // Don't allow admin to ban themselves
+                    if (userId !== this.state.userId) {
+                        const user = users[userId];
+                        const option = document.createElement('option');
+                        option.value = userId;
+                        option.textContent = `${user.name} (${user.email || 'no email'})`;
+                        userSelect.appendChild(option);
+                    }
+                });
+            }
+        });
+    },
+
+    executeBan() {
+        const userIdToBan = this.elements.banUserSelect.value;
+        const reason = this.elements.banReasonInput.value.trim();
+
+        if (!userIdToBan) {
+            this.showMessage("Please select a user to ban.");
+            return;
+        }
+        if (!reason) {
+            this.showMessage("Please provide a reason for the ban.");
+            return;
+        }
+
+        const banDetails = {
+            status: true,
+            reason: reason,
+            timestamp: new Date().toISOString()
+        };
+
+        this.db.ref('users/' + userIdToBan).update({ banned: banDetails })
+            .then(() => {
+                this.showMessage(`User has been banned.`);
+                this.elements.adminBanPanel.classList.add('hidden');
+                this.elements.banReasonInput.value = '';
+            })
+            .catch(error => this.showMessage(`Error banning user: ${error.message}`));
+    },
     // --- Rendering Methods ---
     renderPricingCards() {
         this.elements.pricingCardsContainer.innerHTML = '';
@@ -576,12 +691,35 @@ const App = {
             const order = orders[key];
             const orderDate = new Date(order.timestamp).toLocaleString();
             const orderElement = document.createElement('div');
+            
+            let statusHtml = `<span class="order-status bg-yellow-500/20 text-yellow-300">${order.status}</span>`;
+            if (order.status === 'approved') {
+                statusHtml = `<span class="order-status bg-green-500/20 text-green-300">${order.status}</span>`;
+            } else if (order.status === 'denied') {
+                statusHtml = `<span class="order-status bg-red-500/20 text-red-300">${order.status}</span>`;
+            }
+
+            let buttonsHtml = '';
+            if (order.status === 'pending') {
+                buttonsHtml = `
+                    <div class="flex gap-2 mt-3">
+                        <button data-order-id="${key}" data-user-id="${order.userId}" class="approve-order-btn w-full px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700">Approve</button>
+                        <button data-order-id="${key}" data-user-id="${order.userId}" class="deny-order-btn w-full px-3 py-1 bg-red-700 text-white text-xs font-bold rounded hover:bg-red-800">Deny</button>
+                    </div>`;
+            }
+
             orderElement.className = 'order-item text-left text-sm';
             orderElement.innerHTML = `
-                <p class="font-bold text-base">${order.itemName}</p>
-                <p class="text-gray-300">User: <span class="font-mono">${order.userEmail}</span></p>
-                <p class="text-gray-300">Price: <span class="font-mono">£${order.finalPrice.toFixed(2)}</span></p>
-                <p class="text-gray-400 text-xs mt-1">${orderDate}</p>`;
+                <div class="flex justify-between items-start">
+                    <p class="font-bold text-base">${order.itemName}</p>
+                    ${statusHtml}
+                </div>
+                <div class="mt-2 space-y-1">
+                    <p class="text-gray-300">User: <span class="font-mono">${order.userEmail}</span></p>
+                    <p class="text-gray-300">Price: <span class="font-mono">£${order.finalPrice.toFixed(2)}</span></p>
+                    <p class="text-gray-400 text-xs mt-1">${orderDate}</p>
+                </div>
+                ${buttonsHtml}`;
             this.elements.ordersList.appendChild(orderElement);
         });
     },
@@ -640,15 +778,36 @@ const App = {
             isDiscounted: this.state.isDiscountActive,
             userEmail: this.state.userEmail || 'Guest',
             userId: this.state.userId || 'anonymous',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            status: 'pending'
         };
 
         this.db.ref('Orders').push(orderData)
             .then(() => {
-                this.showMessage("Order placed successfully! We will be in touch.");
+                this.showMessage("Order placed! Brooke will be in touch to arrange payment.");
                 this.viewManager.show('viewer');
             })
             .catch(error => this.showMessage(`Order failed: ${error.message}`));
+    },
+
+    approveOrder(orderId, userId) {
+        this.db.ref('Orders/' + orderId).update({ status: 'approved' });
+        const notification = {
+            message: "Your recent order has been approved! Brooke will be in touch.",
+            timestamp: new Date().toISOString()
+        };
+        this.db.ref('notifications/' + userId).push(notification);
+        this.showMessage("Order approved and user notified.");
+    },
+
+    denyOrder(orderId, userId) {
+        this.db.ref('Orders/' + orderId).update({ status: 'denied' });
+        const notification = {
+            message: "Unfortunately, your recent order has been denied. Please contact support for details.",
+            timestamp: new Date().toISOString()
+        };
+        this.db.ref('notifications/' + userId).push(notification);
+        this.showMessage("Order denied and user notified.");
     },
 
     // --- View Management ---
@@ -679,6 +838,8 @@ const App = {
             this.app.elements.loginFormCard.classList.add('hidden');
             this.app.elements.employeeCardsContainer.classList.add('hidden');
             this.app.elements.ordersPanel.classList.add('hidden');
+            this.app.elements.adminBanPanel.classList.add('hidden');
+            this.app.elements.bannedUserPanel.classList.add('hidden');
         },
         show(viewName) {
             this.hideAll();

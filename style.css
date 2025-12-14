@@ -427,6 +427,23 @@ body::after {
     transform: translateX(0);
 }
 
+/* USER NOTIFICATION BOX */
+#user-notification-box {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 30, 30, 0.95);
+    color: white;
+    padding: 14px 22px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
+    border-top: 4px solid var(--baby-blue);
+    z-index: 2001;
+    opacity: 0;
+    transition: opacity 0.5s, transform 0.5s;
+}
+
 /* THREE.JS CANVAS STYLING */
 #three-canvas-container {
     position: relative;
@@ -620,4 +637,41 @@ body.fade-out {
     border-left: 3px solid var(--baby-blue);
     padding: 0.75rem;
     border-radius: 0.25rem;
+}
+
+.order-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+}
+
+/* ADMIN BAN PANEL */
+.admin-ban-content {
+    position: relative;
+    background: rgba(40, 10, 10, 0.7); /* Reddish glass */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 80, 80, 0.4); /* Red border */
+    box-shadow: 0 8px 32px rgba(255, 0, 0, 0.37);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+}
+
+/* BANNED USER PANEL */
+.banned-user-content {
+    position: relative;
+    background: rgba(40, 10, 10, 0.7); /* Reddish glass */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 2.5rem;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 80, 80, 0.4); /* Red border */
+    box-shadow: 0 8px 32px rgba(255, 0, 0, 0.37);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
 }
