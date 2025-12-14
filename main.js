@@ -246,6 +246,8 @@ const App = {
             executeBanBtn: document.getElementById('execute-ban-btn'),
             userNotificationBox: document.getElementById('user-notification-box'),
             banReasonDisplay: document.getElementById('ban-reason-display'),
+            viewCounter: document.getElementById('view-counter'),
+            viewCountNumber: document.getElementById('view-count-number'),
             bannedUserPanel: document.getElementById('banned-user-panel'),
             userVerifiedBadge: document.getElementById('user-verified-badge'),
         };
@@ -258,6 +260,7 @@ const App = {
 
         this.initFirebase();
         this.bindEvents();
+        this.updateViewCount();
         this.renderEmployeeCards();
         const banner = document.getElementById('beta-banner'); if (banner && this.elements.topHeader) {
             const bannerHeight = banner.offsetHeight;
@@ -372,9 +375,15 @@ const App = {
                 // Show verified badge for specific user
                 this.elements.adminBanBtn.classList.add('hidden');
                 this.elements.ordersBtn.classList.add('hidden'); // Hide by default
+                this.elements.viewCounter.classList.add('hidden');
                 if (user.email === 'icyxrr@gmail.com') {
                     this.elements.adminBanBtn.classList.remove('hidden');
                     this.elements.ordersBtn.classList.remove('hidden');
+                    this.elements.viewCounter.classList.remove('hidden');
+                }
+
+                // Show verified badge for specific users
+                if (user.email === 'icyxrr@gmail.com' || user.email === 'lillupa568@gmail.com') {
                     this.elements.userVerifiedBadge.classList.remove('hidden');
                 } else {
                     this.elements.userVerifiedBadge.classList.add('hidden');
@@ -419,6 +428,7 @@ const App = {
                 this.elements.bannedUserPanel.classList.add('hidden'); // Ensure panel is hidden for guests
                 this.elements.logoutBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>';
                 this.elements.adminBanBtn.classList.add('hidden');
+                this.elements.viewCounter.classList.add('hidden');
                 this.elements.ordersBtn.classList.add('hidden');
                 this.elements.userVerifiedBadge.classList.add('hidden'); // Hide on logout
                 if (this.profileRef) this.profileRef.off(); // Stop listening
@@ -481,6 +491,15 @@ const App = {
         } else {
             this.showMessage("No User ID to copy.");
         }
+    },
+
+    updateViewCount() {
+        this.db.ref('users').on('value', (snapshot) => {
+            const userCount = snapshot.numChildren();
+            if (this.elements.viewCountNumber) {
+                this.elements.viewCountNumber.textContent = userCount;
+            }
+        });
     },
 
     openSupportChat() {

@@ -675,3 +675,9 @@ body.fade-out {
     max-width: 500px;
     text-align: center;
 }
+
+/* VIEW COUNTER */
+#view-counter {
+    opacity: 0;
+    animation: fade-in 1s ease-out 0.5s forwards;
+}
