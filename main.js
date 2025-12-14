@@ -164,8 +164,10 @@ const App = {
         isDiscountActive: false,
         modelIndex: 0,
         selectedPriceItem: null,
+        isSiteActive: true,
         userId: null,
         userEmail: null,
+        allUsersCache: null, // To cache user data for search
     },
     config: {
         DISCOUNT_CODE: "6543210445",
@@ -180,9 +182,9 @@ const App = {
             { name: "Geometric Reindeer", quality: { standard: { material: "Metallic Grey PLA", layerHeight: "0.15mm (Sharp Edges)", printTime: "1h 24m", basePrice: 5.30 + 0.87 }, high: { material: "Silver Resin (SLA Print)", layerHeight: "0.05mm (Premium Finish)", printTime: "Approx 10 hours", basePrice: 12.99 } } }
         ],
         teamData: [
-            { name: "Brooke", role: "Designer", verified: true, icon: '<circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>' },
-            { name: "Smithy", role: "Chief Executive Officer (CEO)", verified: true, icon: '<path d="M12 2l3.09 6.31 6.91.86-5 4.88 1.18 6.91L12 18l-6.18 3.25 1.18-6.91-5-4.88 6.91-.86L12 2z"></path>' },
-            { name: "Adam", role: "Seller", verified: true, icon: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>' }
+            { name: "Brooke", userId: "some-brooke-uid", email: "lillupa568@gmail.com", role: "Designer", verified: true, icon: '<circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>' },
+            { name: "Smithy", userId: "your-admin-uid", email: "icyxrr@gmail.com", role: "Chief Executive Officer (CEO)", verified: true, icon: '<path d="M12 2l3.09 6.31 6.91.86-5 4.88 1.18 6.91L12 18l-6.18 3.25 1.18-6.91-5-4.88 6.91-.86L12 2z"></path>' },
+            { name: "Adam", userId: "some-adam-uid", email: "adam@example.com", role: "Seller", verified: true, icon: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>' }
         ],
         bannedWords: ['spam', 'scam', 'inappropriate'] // Add words that should trigger a ban
     },
@@ -194,7 +196,9 @@ const App = {
     init() {
         this.auth = window.auth;
         this.db = window.db;
+        this.taskListener = null;
         this.notificationListener = null;
+
 
         // Cache DOM elements
         this.elements = {
@@ -205,9 +209,11 @@ const App = {
             contactForm: document.getElementById("contact-form"),
             viewerSection: document.getElementById("viewer-section"),
             userProfileCard: document.getElementById("user-profile-card"),
+            jobsSection: document.getElementById('jobs-section'),
             loginFormCard: document.getElementById('login-form-card'),
             userEmailDisplay: document.getElementById('user-email-display'),
             authorNameDisplay: document.getElementById('author-name-display'),
+            userRoleDisplay: document.getElementById('user-role-display'),
             authorNameInput: document.getElementById('author-name-input'),
             emailInput: document.getElementById('email-input'),
             passwordInput: document.getElementById('password-input'),
@@ -245,12 +251,34 @@ const App = {
             banReasonInput: document.getElementById('ban-reason-input'),
             executeBanBtn: document.getElementById('execute-ban-btn'),
             userNotificationBox: document.getElementById('user-notification-box'),
+            announcementText: document.getElementById('announcement-text'),
+            announcementAdminPanel: document.getElementById('announcement-admin-panel'),
+            announcementInput: document.getElementById('announcement-input'),
+            saveAnnouncementBtn: document.getElementById('save-announcement-btn'),
+            toggleSiteStatusBtn: document.getElementById('toggle-site-status-btn'),
+            bannerDotPing: document.getElementById('banner-dot-ping'),
+            bannerDotMain: document.getElementById('banner-dot-main'),
             banReasonDisplay: document.getElementById('ban-reason-display'),
             viewCounter: document.getElementById('view-counter'),
             viewCountNumber: document.getElementById('view-count-number'),
             bannedUserPanel: document.getElementById('banned-user-panel'),
             userVerifiedBadge: document.getElementById('user-verified-badge'),
+            adminTaskPanel: document.getElementById('admin-task-panel'),
+            closeAdminTaskBtn: document.getElementById('close-admin-task-btn'),
+            taskUserSelect: document.getElementById('task-user-select'),
+            taskDescriptionInput: document.getElementById('task-description-input'),
+            saveTaskBtn: document.getElementById('save-task-btn'),
+            viewTasksPanel: document.getElementById('view-tasks-panel'),
+            closeViewTasksBtn: document.getElementById('close-view-tasks-btn'),
+            tasksList: document.getElementById('tasks-list'),
+            searchPanel: document.getElementById('search-panel'),
+            closeSearchBtn: document.getElementById('close-search-btn'),
+            searchInput: document.getElementById('search-input'),
+            searchResults: document.getElementById('search-results'),
+            searchedUserProfileModal: document.getElementById('searched-user-profile-modal'),
         };
+        this.elements.viewMyTasksBtn = document.getElementById('view-my-tasks-btn');
+        this.elements.setTaskBtn = document.getElementById('set-task-btn');
 
         this.viewManager.init(this);
         this.threeDViewer = new ThreeDViewer('three-canvas', this.config.modelSpecs, (index) => {
@@ -260,6 +288,8 @@ const App = {
 
         this.initFirebase();
         this.bindEvents();
+        this.initAnnouncementListener();
+        this.initSiteStatusListener();
         this.updateViewCount();
         this.renderEmployeeCards();
         const banner = document.getElementById('beta-banner'); if (banner && this.elements.topHeader) {
@@ -271,8 +301,7 @@ const App = {
 
     // --- Event Binding ---
     bindEvents() {
-        document.getElementById("burger").onclick = () => this.toggleSidebar();
-        document.getElementById("search").onclick = () => this.showMessage("Search coming soon!"); 
+        document.getElementById("burger").onclick = () => this.toggleSidebar(); document.getElementById("search").onclick = () => this.openSearchPanel();
         if (this.elements.ordersBtn) {
             this.elements.ordersBtn.onclick = () => this.viewManager.show('orders');
         }
@@ -295,6 +324,7 @@ const App = {
         };
         document.getElementById("contact-btn").onclick = () => this.viewManager.show('contact');
         document.getElementById("viewer-btn").onclick = () => this.viewManager.show('viewer');
+        document.getElementById("jobs-btn").onclick = () => this.viewManager.show('jobs');
         document.getElementById("close-pricing-btn").onclick = () => this.viewManager.show('viewer');
         this.elements.closeSidebarBtn.onclick = () => this.toggleSidebar();
         document.getElementById("prev-model-btn").onclick = () => this.threeDViewer.prevModel();
@@ -336,6 +366,22 @@ const App = {
         if (this.elements.executeBanBtn) {
             this.elements.executeBanBtn.onclick = () => this.executeBan();
         }
+        if (this.elements.saveAnnouncementBtn) {
+            this.elements.saveAnnouncementBtn.onclick = () => this.updateAnnouncement();
+        }
+        if (this.elements.toggleSiteStatusBtn) {
+            this.elements.toggleSiteStatusBtn.onclick = () => this.toggleSiteStatus();
+        }
+        if (this.elements.closeSearchBtn) {
+            this.elements.closeSearchBtn.onclick = () => this.closeSearchPanel();
+        }
+        if (this.elements.searchInput) {
+            this.elements.searchInput.onkeyup = () => this.handleUserSearch();
+        }
+        if (this.elements.searchedUserProfileModal) {
+            // Close modal if user clicks outside the content
+            this.elements.searchedUserProfileModal.onclick = (e) => { if (e.target === this.elements.searchedUserProfileModal) this.elements.searchedUserProfileModal.classList.add('hidden'); };
+        }
 
         // Use event delegation for dynamically created order buttons
         this.elements.ordersList.addEventListener('click', (e) => {
@@ -347,6 +393,13 @@ const App = {
             if (e.target.classList.contains('deny-order-btn')) {
                 this.denyOrder(orderId, userId);
             }
+        });
+
+        // Event delegation for search results
+        this.elements.searchResults.addEventListener('click', e => {
+            const resultItem = e.target.closest('.search-result-item');
+            if (!resultItem) return;
+            this.showUserProfileFromSearch(resultItem.dataset.userId);
         });
     },
 
@@ -376,18 +429,29 @@ const App = {
                 this.elements.adminBanBtn.classList.add('hidden');
                 this.elements.ordersBtn.classList.add('hidden'); // Hide by default
                 this.elements.viewCounter.classList.add('hidden');
+                this.elements.viewMyTasksBtn.classList.add('hidden');
+                this.elements.announcementAdminPanel.classList.add('hidden');
                 if (user.email === 'icyxrr@gmail.com') {
                     this.elements.adminBanBtn.classList.remove('hidden');
                     this.elements.ordersBtn.classList.remove('hidden');
                     this.elements.viewCounter.classList.remove('hidden');
+                    this.elements.announcementAdminPanel.classList.remove('hidden');
                 }
 
+                const teamMember = this.config.teamData.find(member => member.email === user.email);
+
                 // Show verified badge for specific users
-                if (user.email === 'icyxrr@gmail.com' || user.email === 'lillupa568@gmail.com') {
+                if (teamMember?.verified) {
                     this.elements.userVerifiedBadge.classList.remove('hidden');
                 } else {
                     this.elements.userVerifiedBadge.classList.add('hidden');
                 }
+
+                // Display user role if they are a team member
+                if (teamMember?.role) {
+                    this.elements.userRoleDisplay.textContent = teamMember.role;
+                    this.elements.userRoleDisplay.classList.remove('hidden');
+                } 
 
                 // Start listening for notifications for this user
                 if (this.notificationListener) this.notificationListener.off();
@@ -426,13 +490,17 @@ const App = {
                 this.state.userEmail = null;
                 this.elements.authorNameDisplay.textContent = "Guest";
                 this.elements.bannedUserPanel.classList.add('hidden'); // Ensure panel is hidden for guests
+                this.elements.userRoleDisplay.classList.add('hidden');
                 this.elements.logoutBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>';
                 this.elements.adminBanBtn.classList.add('hidden');
+                this.elements.announcementAdminPanel.classList.add('hidden');
                 this.elements.viewCounter.classList.add('hidden');
+                this.elements.viewMyTasksBtn.classList.add('hidden');
                 this.elements.ordersBtn.classList.add('hidden');
                 this.elements.userVerifiedBadge.classList.add('hidden'); // Hide on logout
                 if (this.profileRef) this.profileRef.off(); // Stop listening
                 if (this.notificationListener) this.notificationListener.off(); // Stop listening for notifications
+                if (this.taskListener) { this.taskListener.off(); this.taskListener = null; }
             }
         });
     },
@@ -491,6 +559,76 @@ const App = {
         } else {
             this.showMessage("No User ID to copy.");
         }
+    },
+
+    initAnnouncementListener() {
+        this.db.ref('announcement').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.text) {
+                this.elements.announcementText.textContent = data.text;
+                this.elements.announcementInput.value = data.text; // Also update admin input
+            }
+        });
+    },
+
+    updateAnnouncement() {
+        const newText = this.elements.announcementInput.value.trim();
+        if (!newText) {
+            this.showMessage("Announcement text cannot be empty.");
+            return;
+        }
+        this.db.ref('announcement').set({ text: newText })
+            .then(() => this.showMessage("Announcement updated successfully!"))
+            .catch(error => this.showMessage(`Error: ${error.message}`));
+    },
+
+    initSiteStatusListener() {
+        this.db.ref('siteStatus').on('value', (snapshot) => {
+            const data = snapshot.val();
+            // If data exists, use its value. Otherwise, default to true (active).
+            const isActive = data ? data.isActive : true;
+            this.state.isSiteActive = isActive;
+            this.updateBannerStatus(isActive);
+        });
+    },
+
+    updateBannerStatus(isActive) {
+        const { bannerDotPing, bannerDotMain, toggleSiteStatusBtn, purchaseBtn, announcementText, jobsBtn } = this.elements;
+        if (isActive) {
+            bannerDotPing.classList.replace('bg-red-700', 'bg-green-400');
+            bannerDotMain.classList.replace('bg-red-800', 'bg-green-500');
+            toggleSiteStatusBtn.textContent = 'Deactivate Site (Go Offline)';
+            toggleSiteStatusBtn.classList.replace('bg-green-600', 'bg-yellow-600');
+            purchaseBtn.disabled = false;
+            purchaseBtn.classList.replace('bg-gray-500', 'bg-green-500');
+            purchaseBtn.classList.replace('cursor-not-allowed', 'hover:bg-green-600');
+            if (document.getElementById('jobs-btn')) {
+                document.getElementById('jobs-btn').classList.remove('disabled');
+            }
+
+            // Restore original announcement text when activated
+            this.db.ref('announcement/text').once('value', snapshot => {
+                announcementText.textContent = snapshot.val() || 'We are currently in Beta.';
+            });
+        } else {
+            bannerDotPing.classList.replace('bg-green-400', 'bg-red-700');
+            bannerDotMain.classList.replace('bg-green-500', 'bg-red-800');
+            toggleSiteStatusBtn.textContent = 'Activate Site (Go Online)';
+            toggleSiteStatusBtn.classList.replace('bg-yellow-600', 'bg-green-600');
+            purchaseBtn.disabled = true;
+            purchaseBtn.classList.replace('bg-green-500', 'bg-gray-500');
+            purchaseBtn.classList.replace('hover:bg-green-600', 'cursor-not-allowed');
+            if (document.getElementById('jobs-btn')) {
+                document.getElementById('jobs-btn').classList.add('disabled');
+            }
+
+            announcementText.textContent = 'The store is currently closed. No new orders can be placed.';
+        }
+    },
+
+    toggleSiteStatus() {
+        const newStatus = !this.state.isSiteActive;
+        this.db.ref('siteStatus').set({ isActive: newStatus });
     },
 
     updateViewCount() {
@@ -622,6 +760,7 @@ const App = {
             })
             .catch(error => this.showMessage(`Error banning user: ${error.message}`));
     },
+
     // --- Rendering Methods ---
     renderPricingCards() {
         this.elements.pricingCardsContainer.innerHTML = '';
@@ -641,12 +780,21 @@ const App = {
             card.className = `pricing-card relative ${this.state.selectedPriceItem === index ? 'selected' : ''}`;
             card.dataset.index = index;
             card.innerHTML = `
-                <div class="tick-icon" style="transform: ${this.state.selectedPriceItem === index ? 'scale(1)' : 'scale(0)'};">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"></path></svg>
-                </div>
-                <h3 class="text-xl font-bold pl-2">${item.name}</h3>
-                <p class="text-sm text-gray-300">Print Time: ${item.printTime}</p>
-                ${priceHtml}`;
+            <div class="tick-icon" style="transform: ${this.state.selectedPriceItem === index ? 'scale(1)' : 'scale(0)'};">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold pl-2">${item.name}</h3>
+            <p class="text-sm text-gray-300">Print Time: ${item.printTime}</p>
+            ${priceHtml}
+            <button class="mt-3 px-4 py-2 bg-baby-blue text-black rounded-lg font-bold hover:bg-white transition ${!this.state.isSiteActive ? 'opacity-50 cursor-not-allowed' : ''}" ${!this.state.isSiteActive ? 'disabled' : ''}>
+                Buy Now
+            </button>`;
+            
+            // The original pricing cards in home.html have a buy now button that isn't used.
+            // This code adds a "Buy Now" button to the dynamically generated cards and disables it if the site is inactive.
+            // Note: The click handler for this new button would need to be implemented if desired.
+            // For now, it correctly reflects the site's active/inactive status.
+
             this.elements.pricingCardsContainer.appendChild(card);
             card.onclick = () => this.selectPriceItem(index, item.price !== null);
         });
@@ -682,14 +830,16 @@ const App = {
         this.elements.employeeCardsContainer.innerHTML = '';
         this.config.teamData.forEach(employee => {
             const card = document.createElement('div');
-            card.className = 'employee-card flex items-center gap-4 p-4 rounded-xl';
+            card.className = 'employee-card flex items-center gap-4 p-4 rounded-xl';;
+
             const verifiedBadge = employee.verified ? '<span class="verified-badge">✓</span>' : '';
+
             card.innerHTML = `
                 <div class="employee-icon">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${employee.icon}</svg>
                 </div>
                 <div class="employee-info">
-                    <div class="employee-name text-lg">${employee.name} ${verifiedBadge}</div>
+                    <div class="employee-name text-lg flex items-center gap-2">${employee.name} ${verifiedBadge}</div>
                     <div class="employee-role text-sm text-gray-400">${employee.role}</div>
                 </div>`;
             this.elements.employeeCardsContainer.appendChild(card);
@@ -780,6 +930,11 @@ const App = {
     },
 
     handlePurchase() {
+        if (!this.state.isSiteActive) {
+            this.showMessage("The store is currently closed and not accepting new orders.");
+            return;
+        }
+
         if (this.state.selectedPriceItem === null) {
             this.showMessage("Please select an item to purchase.");
             return;
@@ -828,6 +983,101 @@ const App = {
         this.db.ref('notifications/' + userId).push(notification);
         this.showMessage("Order denied and user notified.");
     },
+    
+    openSearchPanel() {
+        this.elements.searchPanel.classList.remove('hidden');
+        this.elements.searchInput.focus();
+        // Fetch all users and cache them if not already done
+        if (!this.state.allUsersCache) {
+            this.db.ref('users').once('value', (snapshot) => {
+                this.state.allUsersCache = snapshot.val();
+            });
+        }
+    },
+
+    closeSearchPanel() {
+        this.elements.searchPanel.classList.add('hidden');
+        this.elements.searchInput.value = '';
+        this.elements.searchResults.innerHTML = '';
+        this.elements.searchResults.classList.add('hidden');
+    },
+
+    handleUserSearch() {
+        const query = this.elements.searchInput.value.toLowerCase().trim();
+        const resultsContainer = this.elements.searchResults;
+
+        if (!query) {
+            resultsContainer.innerHTML = '';
+            resultsContainer.classList.add('hidden');
+            return;
+        }
+
+        if (!this.state.allUsersCache) {
+            resultsContainer.innerHTML = '<div class="p-3 text-gray-400">User data is loading...</div>';
+            resultsContainer.classList.remove('hidden');
+            return;
+        }
+
+        const results = Object.entries(this.state.allUsersCache)
+            .filter(([userId, user]) =>
+                user.name?.toLowerCase().includes(query) ||
+                user.email?.toLowerCase().includes(query)
+            );
+
+        resultsContainer.innerHTML = '';
+        if (results.length > 0) {
+            results.forEach(([userId, user]) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'search-result-item p-3 hover:bg-gray-700 cursor-pointer';
+                resultItem.dataset.userId = userId;
+                resultItem.innerHTML = `
+                    <p class="font-bold text-white">${user.name || 'Unnamed User'}</p>
+                    <p class="text-sm text-gray-400">${user.email || 'No email'}</p>
+                `;
+                resultsContainer.appendChild(resultItem);
+            });
+            resultsContainer.classList.remove('hidden');
+        } else {
+            resultsContainer.innerHTML = '<div class="p-3 text-gray-400">No users found.</div>';
+            resultsContainer.classList.remove('hidden');
+        }
+    },
+
+    showUserProfileFromSearch(userId) {
+        const user = this.state.allUsersCache?.[userId];
+        if (!user) {
+            this.showMessage("Could not find user data.");
+            return;
+        }
+
+        this.closeSearchPanel();
+
+        // Check if the user is a team member to get specific data
+        const teamMember = this.config.teamData.find(member => member.userId === userId || member.email === user.email);
+
+        const modal = this.elements.searchedUserProfileModal;
+        const nameEl = modal.querySelector('.profile-name');
+        const roleEl = modal.querySelector('.profile-role');
+        const iconEl = modal.querySelector('.profile-icon');
+
+        let iconSvg = '<circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>'; // Default icon
+        let role = "User";
+        let isVerified = false;
+
+        if (teamMember) {
+            iconSvg = teamMember.icon;
+            role = teamMember.role;
+            isVerified = teamMember.verified;
+        }
+
+        const verifiedBadge = isVerified ? '<span class="verified-badge">✓</span>' : '';
+
+        nameEl.innerHTML = `${user.name || 'Unnamed User'} ${verifiedBadge}`;
+        roleEl.textContent = role;
+        iconEl.innerHTML = `<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${iconSvg}</svg>`;
+
+        modal.classList.remove('hidden');
+    },
 
     // --- View Management ---
     viewManager: {
@@ -836,6 +1086,7 @@ const App = {
             this.views = {
                 pricing: { element: app.elements.pricingWave, onShow: () => { this.app.state.selectedPriceItem = null; app.renderPricingCards(); this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.pricingWave.classList.add('active'); } },
                 contact: { element: app.elements.contactForm, onShow: () => { this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.contactForm.classList.add('active'); } },
+                jobs: { element: app.elements.jobsSection, onShow: () => { this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.jobsSection.classList.add('active'); } },
                 userProfile: { element: app.elements.userProfileCard, onShow: () => { this.app.elements.employeeCardsContainer.classList.add('hidden'); this.app.elements.userProfileCard.classList.remove('hidden'); } },
                 login: { element: app.elements.loginFormCard, onShow: () => { this.app.elements.loginFormCard.classList.remove('hidden'); this.app.elements.loginFormCard.classList.add('flex'); } },
                 viewer: { element: app.elements.viewerSection, onShow: () => { app.renderModelDetails(); this.app.elements.employeeCardsContainer.classList.remove('hidden'); app.elements.viewerSection.style.display = 'flex'; } },
@@ -852,6 +1103,7 @@ const App = {
         hideAll() {
             this.app.elements.pricingWave.classList.remove("active");
             this.app.elements.contactForm.classList.remove("active");
+            this.app.elements.jobsSection.classList.remove("active");
             this.app.elements.viewerSection.style.display = 'none';
             this.app.elements.userProfileCard.classList.add('hidden');
             this.app.elements.loginFormCard.classList.add('hidden');
@@ -859,6 +1111,8 @@ const App = {
             this.app.elements.ordersPanel.classList.add('hidden');
             this.app.elements.adminBanPanel.classList.add('hidden');
             this.app.elements.bannedUserPanel.classList.add('hidden');
+            this.app.elements.searchPanel.classList.add('hidden');
+            this.app.elements.searchedUserProfileModal.classList.add('hidden');
         },
         show(viewName) {
             this.hideAll();

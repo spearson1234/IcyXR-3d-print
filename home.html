@@ -20,10 +20,10 @@
     <!-- Beta Banner -->
     <div id="beta-banner" class="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-3 p-2 text-sm text-white bg-red-800/60 backdrop-blur-sm border-b border-red-500/30">
         <span class="relative flex h-2.5 w-2.5">
-            <span class="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
-            <span class="relative inline-flex w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+            <span id="banner-dot-ping" class="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
+            <span id="banner-dot-main" class="relative inline-flex w-2.5 h-2.5 bg-green-500 rounded-full"></span>
         </span>
-        <span>We are currently in Beta. Some features may not be fully functional.</span>
+        <span id="announcement-text">We are currently in Beta. Some features may not be fully functional.</span>
     </div>
 
 
@@ -51,6 +51,9 @@
             <svg id="admin-ban-btn" class="icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
             </svg>
+            <div id="view-my-tasks-btn" class="icon hidden relative">
+                <!-- This container can be repurposed or removed -->
+            </div>
             <svg id="profile-btn" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle cx="12" cy="8" r="4" stroke-width="2"/>
                 <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke-width="2"/>
@@ -78,6 +81,7 @@
             <li id="pricing-btn">Pricing</li>
             <li id="contact-btn">Contact</li>
             <li id="viewer-btn">3D Viewer</li>
+            <li id="jobs-btn">Jobs</li>
         </ul>
         <div class="discount-container">
             <label for="discount-input" class="text-xs text-gray-400 block mb-1">Redeem Discount</label>
@@ -174,6 +178,45 @@
             </p>
         </div>
 
+        <!-- Jobs Section -->
+        <div id="jobs-section" class="contact-form">
+            <h2 class="text-3xl font-bold mb-8 text-white">Job Openings</h2>
+            <div class="space-y-6 w-full max-w-3xl">
+                <!-- Job Card 1 -->
+                <div class="job-card bg-gray-900/70 border border-baby-blue/50 p-6 rounded-lg text-left">
+                    <h3 class="text-2xl font-bold text-baby-blue">3D Modeler / Digital Sculptor</h3>
+                    <p class="text-sm text-gray-400 mb-4">Remote | Full-time</p>
+                    <p class="text-gray-300 mb-4">
+                        We are looking for a talented 3D Modeler to create detailed and high-quality 3D printable models. You will work on a variety of projects from character design to complex mechanical parts.
+                    </p>
+                    <h4 class="font-bold text-white mb-2">Requirements:</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-1">
+                        <li>Proven experience as a 3D Modeler or similar role.</li>
+                        <li>Strong portfolio of 3D models (ZBrush, Blender, etc.).</li>
+                        <li>Understanding of 3D printing processes and limitations.</li>
+                        <li>Creative and artistic with a keen eye for detail.</li>
+                    </ul>
+                    <a href="mailto:icyxrr@gmail.com?subject=Application for 3D Modeler / Digital Sculptor" class="mt-6 inline-block px-5 py-2 bg-baby-blue text-black rounded-lg font-bold hover:bg-white transition">Apply Now</a>
+                </div>
+
+                <!-- Job Card 2 -->
+                <div class="job-card bg-gray-900/70 border border-baby-blue/50 p-6 rounded-lg text-left">
+                    <h3 class="text-2xl font-bold text-baby-blue">Graphic Designer & Brand Specialist</h3>
+                    <p class="text-sm text-gray-400 mb-4">Part-time | Contract</p>
+                    <p class="text-gray-300 mb-4">
+                        We're seeking a creative Graphic Designer to help shape our brand identity. You will be responsible for creating marketing materials, social media content, and ensuring brand consistency.
+                    </p>
+                    <h4 class="font-bold text-white mb-2">Requirements:</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-1">
+                        <li>Strong portfolio in graphic design (Adobe Suite).</li>
+                        <li>Experience with branding and digital marketing.</li>
+                        <li>Ability to create engaging visual content for social media.</li>
+                    </ul>
+                    <a href="mailto:icyxrr@gmail.com?subject=Application for Graphic Designer & Brand Specialist" class="mt-6 inline-block px-5 py-2 bg-baby-blue text-black rounded-lg font-bold hover:bg-white transition">Apply Now</a>
+                </div>
+            </div>
+        </div>
+
         <!-- Login Form Card -->
         <div id="login-form-card" class="hidden w-full max-w-md p-6 rounded-xl bg-gray-900/80 border border-baby-blue/50 flex-col items-center gap-4">
             <h2 class="text-2xl font-bold text-baby-blue">Login or Sign Up</h2>
@@ -200,19 +243,28 @@
                 </svg>
             </div>
             <div class="employee-info text-center">
-                <div id="author-name-display" class="employee-name text-xl">Guest</div>
+                <div class="flex items-center justify-center gap-2">
+                    <div id="author-name-display" class="employee-name text-xl">Guest</div>
+                    <span id="user-verified-badge" class="verified-badge hidden">✓</span>
+                </div>
+                <div id="user-role-display" class="text-sm text-gray-400 mt-1 hidden"></div>
                 <div class="mt-2">
                     <label for="author-name-input" class="text-xs text-gray-400">Edit your name:</label>
                     <input type="text" id="author-name-input" class="w-full p-2 mt-1 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-baby-blue outline-none text-sm" placeholder="Enter new name...">
                 </div>
-
-                <div class="employee-role text-sm mt-2 text-gray-400">Email:</div>
-                <div class="flex items-center justify-center gap-2 mt-1">
+                <div class="flex items-center justify-center gap-2 mt-2">
                     <div id="user-email-display" class="text-sm font-mono break-all text-white"></div>
-                    <span id="user-verified-badge" class="verified-badge hidden">✓</span>
                     <button id="logout-btn"></button>
                 </div>
                 <button id="copy-id-btn" class="mt-2 text-xs text-gray-400 hover:text-white">Copy User ID</button>
+
+                <!-- Announcement Admin Panel (hidden by default) -->
+                <div id="announcement-admin-panel" class="hidden w-full mt-4 pt-4 border-t border-gray-600 text-left">
+                    <label for="announcement-input" class="text-sm font-bold text-baby-blue">Edit Announcement Banner:</label>
+                    <textarea id="announcement-input" rows="2" class="w-full p-2 mt-1 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-baby-blue outline-none text-sm"></textarea>
+                    <button id="save-announcement-btn" class="w-full mt-2 py-1.5 bg-blue-600 text-white font-bold rounded-lg transition hover:bg-blue-700">Save Announcement</button>
+                    <button id="toggle-site-status-btn" class="w-full mt-2 py-1.5 bg-yellow-600 text-white font-bold rounded-lg transition hover:bg-yellow-700">Toggle Site Status</button>
+                </div>
             </div>
         </div>
 
@@ -300,6 +352,20 @@
         </div>
     </div>
 
+    <!-- Search Panel -->
+    <div id="search-panel" class="feedback-modal hidden">
+        <div class="feedback-form-content">
+            <button id="close-search-btn" class="absolute top-2 right-3 text-3xl text-gray-400 hover:text-white">&times;</button>
+            <h2 class="text-2xl font-bold text-baby-blue mb-4">Search Users</h2>
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="Start typing a name or email..." class="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-baby-blue outline-none">
+                <div id="search-results" class="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg max-h-60 overflow-y-auto z-10 hidden">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Banned User Alert Panel -->
     <div id="banned-user-panel" class="feedback-modal hidden">
         <div class="banned-user-content">
@@ -311,5 +377,19 @@
         </div>
     </div>
 
+    <!-- Searched User Profile Modal -->
+    <div id="searched-user-profile-modal" class="feedback-modal hidden">
+        <div class="searched-user-profile-content">
+            <div class="profile-icon mb-4">
+                <!-- Icon will be inserted here by JS -->
+            </div>
+            <div class="text-center">
+                <div class="profile-name text-2xl font-bold flex items-center justify-center gap-2">
+                    <!-- Name and badge will be inserted here -->
+                </div>
+                <div class="profile-role text-md text-gray-400 mt-1"><!-- Role will be inserted here --></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
