@@ -165,13 +165,14 @@ const App = {
         modelIndex: 0,
         selectedPriceItem: null,
         userId: null,
+        userEmail: null,
     },
     config: {
         DISCOUNT_CODE: "6543210445",
         DISCOUNT_RATE: 0.05,
         originalPrices: [
-            { name: "(S) Shark Toy", price: 1.50 + 0.30, printTime: "25m 46s" },
-            { name: "(S) Any Statue", price: null, printTime: "N/A" },
+            // Example: { name: "(S) Shark Toy", price: 1.80, printTime: "25m 46s" },
+            { name: "(S) Shark Toy", price: 1.50 + 0.30, printTime: "25m 46s" }, // Note: JS will calculate this to 1.8
             { name: "(M) Dragon", price: 5.30 + 0.87, printTime: "1h 24m" },
         ],
         modelSpecs: [
@@ -181,8 +182,9 @@ const App = {
         teamData: [
             { name: "Brooke", role: "Designer", verified: true, icon: '<circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>' },
             { name: "Smithy", role: "Chief Executive Officer (CEO)", verified: true, icon: '<path d="M12 2l3.09 6.31 6.91.86-5 4.88 1.18 6.91L12 18l-6.18 3.25 1.18-6.91-5-4.88 6.91-.86L12 2z"></path>' },
-            { name: "Terry", role: "IT Support", verified: true, icon: '<path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84 c-0.24,0-0.44,0.17-0.48,0.41L9.2,5.59C8.6,5.82,8.08,6.14,7.58,6.52L5.19,5.56C4.97,5.49,4.72,5.56,4.6,5.78L2.68,9.1 c-0.11,0.2-0.06,0.47,0.12,0.61l2.03,1.58C4.78,11.36,4.76,11.68,4.76,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.78 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.48-0.41l0.36-2.78c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0.01,0.59-0.22l1.92-3.32c0.11-0.2,0.06-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"></path>' }
-        ]
+            { name: "Adam", role: "Seller", verified: true, icon: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>' }
+        ],
+        bannedWords: ['spam', 'scam', 'inappropriate'] // Add words that should trigger a ban
     },
 
     // --- DOM Elements ---
@@ -190,6 +192,9 @@ const App = {
 
     // --- Initialization ---
     init() {
+        this.auth = window.auth;
+        this.db = window.db;
+
         // Cache DOM elements
         this.elements = {
             messageBox: document.getElementById("message-box"),
@@ -199,8 +204,14 @@ const App = {
             contactForm: document.getElementById("contact-form"),
             viewerSection: document.getElementById("viewer-section"),
             userProfileCard: document.getElementById("user-profile-card"),
-            userIdSkeleton: document.getElementById("user-id-skeleton"),
-            userIdDisplay: document.getElementById('user-id-display'),
+            loginFormCard: document.getElementById('login-form-card'),
+            userEmailDisplay: document.getElementById('user-email-display'),
+            authorNameDisplay: document.getElementById('author-name-display'),
+            authorNameInput: document.getElementById('author-name-input'),
+            emailInput: document.getElementById('email-input'),
+            passwordInput: document.getElementById('password-input'),
+            signinBtn: document.getElementById('signin-btn'),
+            signupBtn: document.getElementById('signup-btn'),
             employeeCardsContainer: document.getElementById("employee-cards-container"),
             pricingCardsContainer: document.querySelector('.pricing-cards'),
             qualitySelector: document.getElementById('quality-selector'),
@@ -210,6 +221,23 @@ const App = {
             closeSidebarBtn: document.getElementById('close-sidebar-btn'),
             navDots: document.querySelectorAll('.nav-dot'),
             logoutBtn: document.getElementById('logout-btn'),
+            customerServiceBtn: document.getElementById('customer-service-btn'),
+            feedbackModal: document.getElementById('feedback-modal'),
+            closeFeedbackBtn: document.getElementById('close-feedback-btn'),
+            supportChatWidget: document.getElementById('support-chat-widget'),
+            supportChatMessages: document.getElementById('support-chat-messages'),
+            supportInputArea: document.getElementById('support-input-area'),
+            supportInput: document.getElementById('support-input'),
+            sendSupportMessageBtn: document.getElementById('send-support-message-btn'),
+            copyIdBtn: document.getElementById('copy-id-btn'),
+            signupPromptModal: document.getElementById('signup-prompt-modal'),
+            signupPromptYes: document.getElementById('signup-prompt-yes'),
+            signupPromptNo: document.getElementById('signup-prompt-no'),
+            ordersBtn: document.getElementById('orders-btn'),
+            ordersPanel: document.getElementById('orders-panel'),
+            ordersList: document.getElementById('orders-list'),
+            closeOrdersBtn: document.getElementById('close-orders-btn'),
+            userVerifiedBadge: document.getElementById('user-verified-badge'),
         };
 
         this.viewManager.init(this);
@@ -218,27 +246,37 @@ const App = {
             this.renderModelDetails();
         });
 
+        this.initFirebase();
         this.bindEvents();
         this.renderEmployeeCards();
-
-        // Expose a method for firebase-init.js to call
-        window.updateAppUserId = this.updateUserId.bind(this);
-
-        // Adjust layout to account for fixed headers
-        const banner = document.getElementById('beta-banner');
-        if (banner && this.elements.topHeader) {
+        const banner = document.getElementById('beta-banner'); if (banner && this.elements.topHeader) {
             const bannerHeight = banner.offsetHeight;
             this.elements.topHeader.style.top = `${bannerHeight}px`;
             document.body.style.paddingTop = `${bannerHeight + this.elements.topHeader.offsetHeight}px`;
-        }
+        } 
     },
 
     // --- Event Binding ---
     bindEvents() {
         document.getElementById("burger").onclick = () => this.toggleSidebar();
-        document.getElementById("search").onclick = () => this.showMessage("Search coming soon!");
-        document.getElementById("profile-btn").onclick = () => this.viewManager.show('userProfile');
-        document.getElementById("pricing-btn").onclick = () => this.viewManager.show('pricing');
+        document.getElementById("search").onclick = () => this.showMessage("Search coming soon!"); 
+        if (this.elements.ordersBtn) {
+            this.elements.ordersBtn.onclick = () => this.viewManager.show('orders');
+        }
+        document.getElementById("profile-btn").onclick = () => {
+            if (this.state.userId) {
+                this.viewManager.show('userProfile');
+            } else {
+                this.viewManager.show('login');
+            }
+        };
+        document.getElementById("pricing-btn").onclick = () => {
+            if (this.state.userId) {
+                this.viewManager.show('pricing');
+            } else {
+                this.elements.signupPromptModal.classList.remove('hidden');
+            }
+        };
         document.getElementById("contact-btn").onclick = () => this.viewManager.show('contact');
         document.getElementById("viewer-btn").onclick = () => this.viewManager.show('viewer');
         document.getElementById("close-pricing-btn").onclick = () => this.viewManager.show('viewer');
@@ -249,6 +287,33 @@ const App = {
         this.elements.redeemBtn.onclick = () => this.handleDiscountRedeem();
         this.elements.qualitySelector.onchange = () => this.renderModelDetails();
         this.elements.purchaseBtn.onclick = () => this.handlePurchase();
+        this.elements.authorNameInput.onchange = () => this.updateAuthorName();
+        this.elements.signinBtn.onclick = () => this.signIn();
+        this.elements.signupBtn.onclick = () => this.signUp();
+
+        if (this.elements.logoutBtn) {
+            this.elements.logoutBtn.onclick = () => this.signOut();
+        }
+        if (this.elements.customerServiceBtn) {
+            this.elements.customerServiceBtn.onclick = () => this.openSupportChat();
+            this.elements.closeFeedbackBtn.onclick = () => this.closeSupportChat();
+            this.elements.sendSupportMessageBtn.onclick = () => this.sendSupportMessage();
+        }
+        if (this.elements.copyIdBtn) {
+            this.elements.copyIdBtn.onclick = () => this.copyUserId();
+        }
+        if (this.elements.signupPromptYes) {
+            this.elements.signupPromptYes.onclick = () => {
+                this.elements.signupPromptModal.classList.add('hidden');
+                this.viewManager.show('login');
+            };
+            this.elements.signupPromptNo.onclick = () => {
+                document.body.classList.add('fade-out');
+            };
+        }
+        if (this.elements.closeOrdersBtn) {
+            this.elements.closeOrdersBtn.onclick = () => this.viewManager.show('viewer');
+        }
     },
 
     // --- Utility Methods ---
@@ -262,21 +327,165 @@ const App = {
         this.elements.sidebar.style.left = (this.elements.sidebar.style.left === "0px") ? "-250px" : "0px";
     },
 
-    updateUserId(userId) {
-        if (userId) {
-            this.state.userId = userId; // Store the new user ID in the state
+    // --- Firebase Methods ---
+    initFirebase() {
+        this.auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in.
+                this.viewManager.show('viewer'); // Go to a default view on login
+                this.state.userId = user.uid;
+                this.state.userEmail = user.email;
+                this.elements.userEmailDisplay.textContent = this.state.userEmail;
+                this.elements.logoutBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4m-5-14l5 5-5 5m5-5H3"></path></svg>';
+
+                // Show verified badge for specific user
+                this.elements.ordersBtn.classList.add('hidden'); // Hide by default
+                if (user.email === 'icyxrr@gmail.com') {
+                    this.elements.ordersBtn.classList.remove('hidden');
+                    this.elements.userVerifiedBadge.classList.remove('hidden');
+                } else {
+                    this.elements.userVerifiedBadge.classList.add('hidden');
+                }
+
+                // Listen for profile changes
+                this.profileRef = this.db.ref('users/' + user.uid);
+                this.profileRef.on('value', (snapshot) => {
+                    const profile = snapshot.val();
+                    if (profile) {
+                        // Only update the UI if the profile exists.
+                        // This prevents resetting the name on subsequent loads.
+                        this.elements.authorNameDisplay.textContent = profile.name || 'New User';
+                        this.elements.authorNameInput.value = profile.name || 'New User';
+                    } else {
+                        // If the profile doesn't exist for some reason, create it.
+                        // This should only happen once.
+                        this.db.ref('users/' + user.uid).set({ name: "New User" });
+                    }
+                });
+            } else {
+                // User is signed out.
+                this.state.userId = null;
+                this.state.userEmail = null;
+                this.elements.authorNameDisplay.textContent = "Guest";
+                this.elements.logoutBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>';
+                this.elements.ordersBtn.classList.add('hidden');
+                this.elements.userVerifiedBadge.classList.add('hidden'); // Hide on logout
+                if (this.profileRef) this.profileRef.off(); // Stop listening
+            }
+        });
+    },
+
+    signUp() {
+        const email = this.elements.emailInput.value;
+        const password = this.elements.passwordInput.value;
+        if (!email || !password) {
+            this.showMessage("Please enter both email and password.");
+            return;
+        }
+        this.auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Create a user profile in the database
+                this.db.ref('users/' + userCredential.user.uid).set({ name: "New User" });
+                this.showMessage("Account created successfully! You are now logged in.");
+            })
+            .catch(error => this.showMessage(`Sign-up failed: ${error.message}`));
+    },
+
+    signIn() {
+        const email = this.elements.emailInput.value;
+        const password = this.elements.passwordInput.value;
+        if (!email || !password) {
+            this.showMessage("Please enter both email and password.");
+            return;
+        }
+        this.auth.signInWithEmailAndPassword(email, password)
+            .then(() => {
+                this.showMessage("Signed in successfully!");
+            })
+            .catch(error => this.showMessage(`Sign-in failed: ${error.message}`));
+    },
+
+    signOut() {
+        if (this.state.userId) {
+            this.auth.signOut();
+            this.showMessage("You have been signed out.");
+            this.viewManager.show('viewer'); // Redirect to a neutral view after logout
+        }
+    },
+    updateAuthorName() {
+        const newName = this.elements.authorNameInput.value.trim();
+        if (newName && this.state.userId) {
+            this.db.ref('users/' + this.state.userId).update({ name: newName })
+                .then(() => this.showMessage("Name updated!"))
+                .catch(error => this.showMessage("Error updating name: " + error.message));
+        }
+    },
+
+    copyUserId() {
+        if (this.state.userId) {
+            navigator.clipboard.writeText(this.state.userId)
+                .then(() => this.showMessage("User ID copied to clipboard!"))
+                .catch(err => this.showMessage("Failed to copy User ID."));
+        } else {
+            this.showMessage("No User ID to copy.");
+        }
+    },
+
+    openSupportChat() {
+        this.elements.feedbackModal.classList.remove('hidden');
+        const messagesContainer = this.elements.supportChatMessages;
+
+        // Check if chat has already been started
+        if (messagesContainer.innerHTML !== '') {
+            return;
         }
 
-        if (this.state.userId) {
-            this.elements.userIdDisplay.textContent = this.state.userId;
-            this.elements.userIdSkeleton.classList.add('hidden');
-            this.elements.userIdDisplay.classList.remove('hidden');
+        // --- New Chat Logic ---
+        messagesContainer.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+        this.elements.supportInputArea.classList.add('hidden');
+        this.elements.supportInputArea.classList.remove('fade-in');
+
+        setTimeout(() => {
+            messagesContainer.innerHTML = `<p class="bot-message">Hi! Welcome to ICYXR 3D Printing, how can I help?</p>`;
+            
+            // Fade in the input area
+            setTimeout(() => {
+                this.elements.supportInputArea.classList.remove('hidden');
+                this.elements.supportInputArea.classList.add('fade-in');
+            }, 500);
+
+        }, 2500);
+    },
+
+    closeSupportChat() {
+        this.elements.feedbackModal.classList.add('hidden');
+        // Reset the chat so it can be started again on next open
+        this.elements.supportChatMessages.innerHTML = '';
+        this.elements.supportInputArea.classList.add('hidden');
+        this.elements.supportInput.value = '';
+    },
+
+    sendSupportMessage() {
+        const message = this.elements.supportInput.value.trim();
+        if (!message) {
+            this.showMessage("Please type a message before sending.");
+            return;
         }
-        if (this.elements.logoutBtn) {
-            this.elements.logoutBtn.onclick = () => auth.signInAnonymously()
-                .then(() => this.showMessage("New anonymous user session created."))
-                .catch(err => console.error("New session failed", err));
-        }
+
+        const ticketData = {
+            message: message,
+            userId: this.state.userId || 'guest',
+            userEmail: this.state.userEmail || 'guest',
+            timestamp: new Date().toISOString(),
+            status: 'new'
+        };
+
+        this.db.ref('SupportTickets').push(ticketData)
+            .then(() => {
+                this.elements.supportChatMessages.innerHTML = `<p class="bot-message">Thank you! Your message has been sent. Our team will be in touch shortly.</p>`;
+                this.elements.supportInputArea.classList.add('hidden');
+            })
+            .catch(error => this.showMessage(`Error sending message: ${error.message}`));
     },
 
     // --- Rendering Methods ---
@@ -298,8 +507,10 @@ const App = {
             card.className = `pricing-card relative ${this.state.selectedPriceItem === index ? 'selected' : ''}`;
             card.dataset.index = index;
             card.innerHTML = `
-                <div class="tick-icon" style="transform: ${this.state.selectedPriceItem === index ? 'scale(1)' : 'scale(0)'}; background-color: ${this.state.selectedPriceItem === index ? '#4ade80' : 'rgba(255,255,255,0.2)'};"></div>
-                <h3 class="text-xl font-bold">${item.name}</h3>
+                <div class="tick-icon" style="transform: ${this.state.selectedPriceItem === index ? 'scale(1)' : 'scale(0)'};">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold pl-2">${item.name}</h3>
                 <p class="text-sm text-gray-300">Print Time: ${item.printTime}</p>
                 ${priceHtml}`;
             this.elements.pricingCardsContainer.appendChild(card);
@@ -351,6 +562,29 @@ const App = {
         });
     },
 
+    renderOrders(orders) {
+        this.elements.ordersList.innerHTML = '';
+        if (!orders) {
+            this.elements.ordersList.innerHTML = '<p class="text-gray-400">No orders found.</p>';
+            return;
+        }
+
+        // Newest orders first
+        const orderKeys = Object.keys(orders).reverse();
+
+        orderKeys.forEach(key => {
+            const order = orders[key];
+            const orderDate = new Date(order.timestamp).toLocaleString();
+            const orderElement = document.createElement('div');
+            orderElement.className = 'order-item text-left text-sm';
+            orderElement.innerHTML = `
+                <p class="font-bold text-base">${order.itemName}</p>
+                <p class="text-gray-300">User: <span class="font-mono">${order.userEmail}</span></p>
+                <p class="text-gray-300">Price: <span class="font-mono">£${order.finalPrice.toFixed(2)}</span></p>
+                <p class="text-gray-400 text-xs mt-1">${orderDate}</p>`;
+            this.elements.ordersList.appendChild(orderElement);
+        });
+    },
     // --- Logic Methods ---
     handleDiscountRedeem() {
         const input = this.elements.discountInput.value.trim();
@@ -400,11 +634,21 @@ const App = {
             finalPrice *= (1 - this.config.DISCOUNT_RATE);
         }
 
-        const subject = `New 3D Print Order: ${item.name}`;
-        const body = `Hello, I would like to order the following item:\n\n- Item: ${item.name}\n- Price: £${finalPrice.toFixed(2)}${this.state.isDiscountActive ? ' (Discounted)' : ''}\n- Print Time: ${item.printTime}\n\nMy User ID is: ${this.state.userId || 'Not available'}\n\nPlease let me know the next steps.\n\nThank you!`;
+        const orderData = {
+            itemName: item.name,
+            finalPrice: finalPrice,
+            isDiscounted: this.state.isDiscountActive,
+            userEmail: this.state.userEmail || 'Guest',
+            userId: this.state.userId || 'anonymous',
+            timestamp: new Date().toISOString()
+        };
 
-        window.location.href = `mailto:icyxrr@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        this.showMessage("Please complete the purchase in your email client.");
+        this.db.ref('Orders').push(orderData)
+            .then(() => {
+                this.showMessage("Order placed successfully! We will be in touch.");
+                this.viewManager.show('viewer');
+            })
+            .catch(error => this.showMessage(`Order failed: ${error.message}`));
     },
 
     // --- View Management ---
@@ -414,15 +658,17 @@ const App = {
             this.views = {
                 pricing: { element: app.elements.pricingWave, onShow: () => { this.app.state.selectedPriceItem = null; app.renderPricingCards(); this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.pricingWave.classList.add('active'); } },
                 contact: { element: app.elements.contactForm, onShow: () => { this.app.elements.employeeCardsContainer.classList.add('hidden'); app.elements.contactForm.classList.add('active'); } },
-                userProfile: { element: app.elements.userProfileCard, onShow: () => { 
-                    this.app.elements.employeeCardsContainer.classList.add('hidden'); 
-                    this.app.elements.userProfileCard.classList.remove('hidden'); 
-                    // Refresh the display based on current state
-                    if (!this.app.state.userId) {
-                        this.app.elements.userIdSkeleton.classList.remove('hidden');
-                        this.app.elements.userIdDisplay.classList.add('hidden');
-                    } else { this.app.updateUserId(); } } },
-                viewer: { element: app.elements.viewerSection, onShow: () => { app.renderModelDetails(); this.app.elements.employeeCardsContainer.classList.remove('hidden'); app.elements.viewerSection.style.display = 'flex'; } }
+                userProfile: { element: app.elements.userProfileCard, onShow: () => { this.app.elements.employeeCardsContainer.classList.add('hidden'); this.app.elements.userProfileCard.classList.remove('hidden'); } },
+                login: { element: app.elements.loginFormCard, onShow: () => { this.app.elements.loginFormCard.classList.remove('hidden'); this.app.elements.loginFormCard.classList.add('flex'); } },
+                viewer: { element: app.elements.viewerSection, onShow: () => { app.renderModelDetails(); this.app.elements.employeeCardsContainer.classList.remove('hidden'); app.elements.viewerSection.style.display = 'flex'; } },
+                orders: {
+                    element: app.elements.ordersPanel, onShow: () => {
+                        this.app.elements.ordersPanel.classList.remove('hidden');
+                        this.app.db.ref('Orders').once('value', (snapshot) => {
+                            this.app.renderOrders(snapshot.val());
+                        });
+                    }
+                }
             };
         },
         hideAll() {
@@ -430,13 +676,17 @@ const App = {
             this.app.elements.contactForm.classList.remove("active");
             this.app.elements.viewerSection.style.display = 'none';
             this.app.elements.userProfileCard.classList.add('hidden');
+            this.app.elements.loginFormCard.classList.add('hidden');
             this.app.elements.employeeCardsContainer.classList.add('hidden');
+            this.app.elements.ordersPanel.classList.add('hidden');
         },
         show(viewName) {
             this.hideAll();
-            if (this.views[viewName] && this.views[viewName].onShow) {
-                this.views[viewName].onShow();
-            }
+            const view = this.views[viewName];
+            if (view && view.element) {
+                if (view.onShow) view.onShow();
+                else view.element.classList.remove('hidden');
+            } 
         }
     }
 };
@@ -444,7 +694,5 @@ const App = {
 // --- Initialize ---
 window.onload = () => {
     App.init();
-    // Let onAuthStateChanged handle the initial user state
-    auth.signInAnonymously().catch(err => console.error("Anonymous sign-in failed", err));
     App.viewManager.show('viewer');
 };
